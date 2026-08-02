@@ -15,9 +15,11 @@ export interface JWTPayload {
 }
 
 export async function verifyCredentials(
-  username: string,
-  password: string
+  rawUsername: string,
+  rawPassword: string
 ): Promise<JWTPayload | null> {
+  const username = (rawUsername || "").trim();
+  const password = (rawPassword || "").trim();
   const databaseUrl =
     process.env.DATABASE_URL ||
     "postgresql://neondb_owner:npg_mhjnwN9DT8qi@ep-falling-art-aydojaq2.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require";
