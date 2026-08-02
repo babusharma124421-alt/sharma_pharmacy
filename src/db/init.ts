@@ -21,11 +21,7 @@ async function query(databaseUrl: string, queryText: string, params: any[] = [])
   }
 }
 
-let isInitialized = false;
-
 export async function ensureTablesExist() {
-  if (isInitialized) return;
-
   const databaseUrl =
     process.env.DATABASE_URL ||
     "postgresql://neondb_owner:npg_mhjnwN9DT8qi@ep-falling-art-aydojaq2.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require";
@@ -322,7 +318,7 @@ export async function ensureTablesExist() {
       }
     }
 
-    isInitialized = true;
+    // Done initializing
   } catch (err) {
     console.error("ensureTablesExist error:", err);
   }
