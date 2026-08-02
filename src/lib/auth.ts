@@ -20,9 +20,8 @@ export async function verifyCredentials(
   const users = await db
     .select()
     .from(adminUsers)
-    .where(eq(adminUsers.username, username))
-    .limit(1);
-  if (users.length === 0) return null;
+    .where(eq(adminUsers.username, username));
+  if (!users || users.length === 0) return null;
   const user = users[0];
   if (!user.active) return null;
   const valid = await bcrypt.compare(password, user.passwordHash);
