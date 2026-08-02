@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { verifyCredentials, createToken } from "@/lib/auth";
+import { ensureTablesExist } from "@/db/init";
 
 export async function POST(request: Request) {
   try {
+    await ensureTablesExist();
     const { username, password } = await request.json();
     if (!username || !password) {
       return NextResponse.json({ error: "Username and password required" }, { status: 400 });
