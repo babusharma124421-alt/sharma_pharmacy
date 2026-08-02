@@ -261,16 +261,16 @@ export async function ensureTablesExist() {
       END $$;
     `);
 
-    // 3. Ensure Default Admin User Exists!
-    const users = await query(databaseUrl, `SELECT id FROM admin_users WHERE username = $1 LIMIT 1`, ["admin"]);
-    if (!users || users.length === 0) {
-      const hash = await hashPassword("admin123");
-      await query(
-        databaseUrl,
-        `INSERT INTO admin_users (username, password_hash, full_name, role) VALUES ($1, $2, $3, $4)`,
-        ["admin", hash, "Sharma Admin", "owner"]
-      );
-    }
+    // 3. Ensure Default Admin User Exists and has valid credentials!
+    const hash = await hashPassword("admin123");
+    await query(
+      databaseUrl,
+      `INSERT INTO admin_users (username, password_hash, full_name, role, active) 
+       VALUES ($1, $2, $3, $4, true)
+       ON CONFLICT (username) 
+       DO UPDATE SET password_hash = $2, active = true;`,
+      ["admin", hash, "Sharma Admin", "owner"]
+    );
 
     // 4. Seed Business Settings if empty
     const settings = await query(databaseUrl, `SELECT key FROM business_settings LIMIT 1`);
