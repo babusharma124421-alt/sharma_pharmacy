@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { db } from "@/db";
 import { adminUsers } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { neon } from "@neondatabase/serverless";
 
 const JWT_SECRET = process.env.JWT_SECRET || "sharma-pharmacy-secret-key-2024";
 
@@ -17,20 +18,56 @@ export async function verifyCredentials(
   username: string,
   password: string
 ): Promise<JWTPayload | null> {
-  const users = await db
-    .select()
-    .from(adminUsers)
-    .where(eq(adminUsers.username, username));
-  if (!users || users.length === 0) return null;
-  const user = users[0];
+  const databaseUrl =
+    process.env.DATABASE_URL ||
+    "postgresql://neondb_owner:npg_mhjnwN9DT8qi@ep-falling-art-aydojaq2.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require";
+
+  let user: any = null;
+
+  try {
+    const users = await db
+      .select()
+      .from(adminUsers)
+      .where(eq(adminUsers.username, username));
+    if (users && users.length > 0) {
+      user = users[0];
+    }
+  } catch (dbErr) {
+    console.error("Drizzle verifyCredentials error, using direct neon fallback:", dbErr);
+  }
+
+  // Fallback if db instance had driver issues
+  if (!user) {
+    try {
+      const sql: any = neon(databaseUrl);
+      const rows = await sql("SELECT id, username, password_hash, full_name, role, active FROM admin_users WHERE username = $1", [username]);
+      if (rows && rows.length > 0) {
+        const r = rows[0];
+        user = {
+          id: r.id,
+          username: r.username,
+          passwordHash: r.password_hash,
+          fullName: r.full_name,
+          role: r.role,
+          active: r.active,
+        };
+      }
+    } catch (neonErr) {
+      console.error("Neon fallback verifyCredentials error:", neonErr);
+    }
+  }
+
+  if (!user) return null;
   if (!user.active) return null;
+
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) return null;
+
   return {
     userId: user.id,
     username: user.username,
     role: user.role,
-    fullName: user.fullName,
+    fullName: user.fullName || "Admin",
   };
 }
 
