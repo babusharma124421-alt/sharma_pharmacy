@@ -53,8 +53,7 @@ export async function POST(request: Request) {
         const med = await db
           .select()
           .from(medicines)
-          .where(eq(medicines.id, item.medicineId))
-          .limit(1);
+          .where(eq(medicines.id, item.medicineId));
         if (med.length > 0) {
           const newQty = Math.max(0, med[0].quantity - item.quantity);
           await db
