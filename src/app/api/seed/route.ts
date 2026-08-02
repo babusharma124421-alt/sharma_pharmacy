@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
+import { ensureTablesExist } from "@/db/init";
 import { adminUsers, businessSettings, medicines, doctorSchedules } from "@/db/schema";
 import { hashPassword } from "@/lib/auth";
 import { DEFAULT_SETTINGS } from "@/lib/constants";
 import { eq } from "drizzle-orm";
 
+export async function GET() {
+  return POST();
+}
+
 export async function POST() {
   try {
+    await ensureTablesExist();
+
     // Seed admin user
     const existing = await db
       .select()
@@ -69,7 +76,7 @@ export async function POST() {
       }
     }
 
-    return NextResponse.json({ success: true, message: "Database seeded" });
+    return NextResponse.json({ success: true, message: "Database seeded successfully!" });
   } catch (error) {
     console.error("Seed error:", error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
