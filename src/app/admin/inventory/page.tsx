@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AdminShell from "@/components/AdminShell";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface Medicine {
   id: number;
@@ -33,6 +34,8 @@ export default function InventoryPage() {
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState("");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   const load = () => {
     fetch("/api/medicines?all=true")
@@ -49,15 +52,22 @@ export default function InventoryPage() {
   const handleSave = async () => {
     const url = editId ? `/api/medicines/${editId}` : "/api/medicines";
     const method = editId ? "PUT" : "POST";
-    await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    setShowForm(false);
-    setEditId(null);
-    setForm(emptyForm);
-    load();
+    setError("");
+    setNotice("");
+    try {
+      await fetchJson(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      setShowForm(false);
+      setEditId(null);
+      setForm(emptyForm);
+      setNotice(editId ? "Medicine updated successfully." : "Medicine added successfully.");
+      load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to save medicine.");
+    }
   };
 
   const handleEdit = (med: Medicine) => {
@@ -81,8 +91,15 @@ export default function InventoryPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this medicine?")) return;
-    await fetch(`/api/medicines/${id}`, { method: "DELETE" });
-    load();
+    setError("");
+    setNotice("");
+    try {
+      await fetchJson(`/api/medicines/${id}`, { method: "DELETE" });
+      setNotice("Medicine removed from inventory.");
+      load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to delete medicine.");
+    }
   };
 
   const filtered = meds.filter((m) =>
@@ -112,6 +129,18 @@ export default function InventoryPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full px-4 py-3 border border-slate-200 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm"
         />
+
+        {notice && (
+          <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            ✓ {notice}
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
 
         {/* Form Modal */}
         {showForm && (
