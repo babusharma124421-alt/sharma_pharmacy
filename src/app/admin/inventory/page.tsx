@@ -35,7 +35,6 @@ export default function InventoryPage() {
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
 
   const load = () => {
     fetch("/api/medicines?all=true")
@@ -53,7 +52,6 @@ export default function InventoryPage() {
     const url = editId ? `/api/medicines/${editId}` : "/api/medicines";
     const method = editId ? "PUT" : "POST";
     setError("");
-    setNotice("");
     try {
       await fetchJson(url, {
         method,
@@ -63,7 +61,6 @@ export default function InventoryPage() {
       setShowForm(false);
       setEditId(null);
       setForm(emptyForm);
-      setNotice(editId ? "Medicine updated successfully." : "Medicine added successfully.");
       load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to save medicine.");
@@ -92,10 +89,8 @@ export default function InventoryPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this medicine?")) return;
     setError("");
-    setNotice("");
     try {
       await fetchJson(`/api/medicines/${id}`, { method: "DELETE" });
-      setNotice("Medicine removed from inventory.");
       load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to delete medicine.");
@@ -129,12 +124,6 @@ export default function InventoryPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full px-4 py-3 border border-slate-200 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm"
         />
-
-        {notice && (
-          <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            ✓ {notice}
-          </div>
-        )}
 
         {error && (
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
